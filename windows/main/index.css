@@ -1,0 +1,54 @@
+body {
+    font-family: 'Arial, Helvetica';
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+ul li {
+    display: inline-block;
+    cursor: pointer;
+}
+
+ul li:hover {
+  background: #ebebeb;
+}
+
+.drop {
+  position: relative;
+  padding: 1em 18px;
+}
+
+.drop ul {
+  position: absolute;
+  left: 0;
+  top: 3.3em;
+  transition: all 0.3s ease;
+  transform: scale(0);
+  transform-origin: 0 0;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.16), 0 2px 8px 0 rgba(0, 0, 0, 0.12);
+}
+
+.drop ul li {
+  display: block;
+}
+
+.drop ul li a {
+  width: 100%;
+  padding: 1em 18px;
+  display: inline-block;
+  white-space: pre;
+  box-sizing: border-box;
+  color: #333;
+  text-decoration: none;
+}
+
+.drop ul li a:hover {
+  background: #ebebeb;
+}
+
+.drop:hover ul {
+  transform: scale(1);
+}

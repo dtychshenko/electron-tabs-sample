@@ -1,0 +1,16 @@
+{
+  "name": "electron-tabbed",
+  "version": "1.0.0",
+  "description": "A sample Electron application with multiple windows and multiple tabs",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^2.0.0"
+  },
+  "dependencies": {
+    "dragula": "^3.7.2",
+    "electron-tabs": "^0.9.1"
+  }
+}
