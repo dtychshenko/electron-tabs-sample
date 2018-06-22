@@ -56,7 +56,7 @@ function addTabbedWindow(params, x = 400, y = 0, width = 800, height = 400) {
   const tabbedWindow = new BrowserWindow({ width, height, x, y });
   tabbedWindow.loadURL(paths.tabs);
   
-  tabbedWindow.webContents.openDevTools();
+  // tabbedWindow.webContents.openDevTools();
   
   // Dereference the tab window when it closes
   tabbedWindow.once("closed", () => {
