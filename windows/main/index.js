@@ -6,8 +6,10 @@ const handleLinkClick = event => {
     
     // Get link url and title from the clicked element to pass to the open window event
     const params = {
-        title: event.target.innerText,
-        src: event.target.href
+        tabOptions: {
+            title: event.target.innerText,
+            src: event.target.href
+        }
     };
 
     // Dispatch an event to the main process to open a new tab in the tabbed window

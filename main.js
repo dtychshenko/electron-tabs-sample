@@ -1,57 +1,79 @@
-const { app, ipcMain, BrowserWindow } = require("electron");
+const { app, ipcMain, BrowserWindow, crashReporter } = require("electron");
 const path = require("path");
 
 // Reference to the main window that contains the menu
 let mainWindow;
 
-// Reference to the tabs window that holds all the tabs
-let tabsWindow;
+// Tabbed windows that can hold multiple tabs
+let tabbedWindows = [];
+
+// Resolved paths to window templates
+const paths = {
+  main: path.resolve("windows/main/index.html"),
+  tabs: path.resolve("windows/tabs/index.html")
+}
 
 // Default window options
-const winOptions = {
+const defaultWinOptions = {
   width: 400,
   height: 400,
   x: 0,
   y: 0
 };
 
-app.on("ready", () => {
+app.once("ready", () => {
   // When app is ready, open the main window with the menu
-  mainWindow = new BrowserWindow(winOptions);
-  mainWindow.loadFile("windows/main/index.html");
+  mainWindow = new BrowserWindow(defaultWinOptions);
+  mainWindow.loadFile(paths.main);
 
   // When the main window is closed, also close the tabbed windows
   mainWindow.on("closed", () => {
     mainWindow = null;
-    tabsWindow && tabsWindow.close();
+    BrowserWindow.getAllWindows().forEach(w => w.close());
   });
 });
 
 // Shut down the application if all windows are closed
-app.on("window-all-closed", () => app.quit());
+app.once("window-all-closed", () => app.quit());
 
-ipcMain.on("open-tabs-window", (event, params) => {
-  // When the renderer process requests to open a new tab, check if a tabs window already exists or not
-  if (!tabsWindow) {
-    // If the tab window doesn't exist (first tab is opened), create the tab window first
-    tabsWindow = new BrowserWindow({ ...winOptions, x: 400 });
-    tabsWindow.loadURL(path.resolve("windows/tabs/index.html"));
-
-    // Dereference the tab window when it closes
-    tabsWindow.on("close", () => tabsWindow = null);
-
-    // When the tab window finished loading, dispatch an event to add a new tab
-    tabsWindow.webContents.once("did-finish-load", () => {
-      tabsWindow.webContents.send("open-tab", params);
-    });
-  } else {
-    // Otherwise, the tab window already exists, so just dispatch an event to add a new tab
-    tabsWindow.webContents.send("open-tab", params);
+ipcMain.on("open-tabs-window", (_event, params) => {
+  // If there are no tabbed windows or if the caller is requesting a new window, open a new browser window
+  if (tabbedWindows.length < 1 || params.forceNewWindow) {
+    addTabbedWindow(params, params.x, params.y);
+    return;
   }
 
-  // Focus on the tabbed window
-  tabsWindow.focus();
+  // Otherwise, open a new tab in the last available tabbed window
+  const [ lastWindow ] = tabbedWindows.slice(-1);
+  if (!lastWindow.isDestroyed()) {
+    lastWindow.webContents.send("open-tab", params);
+    lastWindow.focus();
+  }
 });
 
-// When the last tab is closed, this event is triggered, which will close the tab window
-ipcMain.on("close-tabs-window", () => tabsWindow.close());
+function addTabbedWindow(params, x = 400, y = 0, width = 800, height = 400) {
+  // Create the tab window first based on the parameters
+  const tabbedWindow = new BrowserWindow({ width, height, x, y });
+  tabbedWindow.loadURL(paths.tabs);
+  
+  tabbedWindow.webContents.openDevTools();
+  
+  // Dereference the tab window when it closes
+  tabbedWindow.once("closed", () => {
+    const removeIndex = tabbedWindows.indexOf(tabbedWindow);
+    if (removeIndex > -1) {
+      tabbedWindows.splice(removeIndex, 1);
+    }
+  });
+  
+  // When the tab window finished loading, dispatch an event to add a new tab
+  tabbedWindow.webContents.once("did-finish-load", () => {
+    tabbedWindow.webContents.send("open-tab", params);
+  });
+
+  // Focus on the new tabbed window
+  tabbedWindow.focus();
+
+  // Store the reference to this window in the array
+  tabbedWindows.push(tabbedWindow);
+}
